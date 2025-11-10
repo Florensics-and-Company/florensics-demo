@@ -47,8 +47,10 @@ model Notification {
 model Sensor{
   id String @id @default(cuid())
   alert Boolean @default(false)
-  temp String?
-  hum String?
-  flame String?
+  temp Float?
+  hum Float?
+  flame Float?
+  flameBinary Boolean?
+  gas Float?
   image String?
 }
