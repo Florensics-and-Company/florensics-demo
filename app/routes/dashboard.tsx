@@ -94,6 +94,7 @@ export default function DashboardTest() {
   const [fireAnal, setFireAnal] = useState("--");
   const [smoke, setSmoke] = useState("--");
   const [smokeWarning, setSmokeWarning] = useState(false);
+  const [isSoundEnabled, setIsSoundEnabled] = useState(false);
 
   // Apply demo-dark class to html and body elements
   useEffect(() => {
@@ -119,7 +120,7 @@ export default function DashboardTest() {
             const smokeLevel = data.gas ? data.gas * 100 : 0;
             setSmoke(data.gas ? smokeLevel.toFixed(1) : "--");
             setSmokeWarning(smokeLevel > 75);
-            if (data.alert) {
+            if (data.alert && isSoundEnabled) {
               const audio = new Audio(
                 "https://www.myinstants.com/media/sounds/tethys.mp3",
               );
@@ -137,7 +138,7 @@ export default function DashboardTest() {
     const interval = setInterval(updateSensorData, 1000);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [isSoundEnabled]);
 
   return (
     <div
@@ -154,6 +155,26 @@ export default function DashboardTest() {
             <img src={florensicsLogo} alt="Florensics Logo" className="logo" />
             <h1>Florensics</h1>
           </a>
+          <button
+            onClick={() => setIsSoundEnabled(!isSoundEnabled)}
+            style={{
+              padding: "8px 16px",
+              borderRadius: "8px",
+              border: "2px solid #97BC62",
+              background: isSoundEnabled ? "#97BC62" : "transparent",
+              color: isSoundEnabled ? "#0a0a0a" : "#97BC62",
+              cursor: "pointer",
+              fontWeight: "600",
+              fontSize: "14px",
+              transition: "all 0.3s ease",
+              display: "flex",
+              alignItems: "center",
+              gap: "8px",
+            }}
+            title={isSoundEnabled ? "Sound On" : "Sound Off"}
+          >
+            {isSoundEnabled ? "🔊" : "🔇"} Sound {isSoundEnabled ? "On" : "Off"}
+          </button>
         </nav>
       </header>
       <main style={{ flex: 1 }}>
@@ -176,7 +197,7 @@ export default function DashboardTest() {
               id="fire-box"
             >
               <h2>Fire</h2>
-              <div className="dashboard-value" id="fire-value">
+              <div className="dashboard-value" id="fire-value" style={{ color: fire === "Yes" ? "#FF4C4C" : "inherit" }}>
                 {fire}
               </div>
               <div className="dashboard-subvalue" id="smoke-warning">
@@ -188,11 +209,11 @@ export default function DashboardTest() {
               <div className="dashboard-value" id="smoke-value">
                 {smoke}
               </div>
-              {smokeWarning && (
+              {smokeWarning ? (
                 <div className="dashboard-warning" id="smoke-warning">
                   Abnormal level
                 </div>
-              )}
+              ) : null}
             </div>
           </div>
           <div className="dashboard-map">

@@ -6,14 +6,6 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const searchParams = new URL(request.url).searchParams;
   const flameBinaryString = searchParams.get("flame");
   const flameAnalogString = searchParams.get("flame_anal");
-  const status =
-    searchParams.get("status") === null
-      ? flameBinaryString === "true"
-        ? true
-        : undefined
-      : searchParams.get("status") === "true"
-        ? true
-        : false;
 
   const tempString = searchParams.get("temp");
   const humString = searchParams.get("hum");
@@ -35,7 +27,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
   const flameBinary = flameBinaryString === "true" ? true : flameBinaryString === "false" ? false : undefined;
 
   const newData = {
-    alert: status,
+    alert: flameBinary,
     temp: validTemp,
     hum: validHum,
     flameBinary: flameBinary,
