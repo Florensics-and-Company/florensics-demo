@@ -61,7 +61,11 @@ nav {
 }
 
 .logo-container h1 {
-    font-size: 1.5rem;
+    font-size: 2rem;
+    /* font-weight: 600; */
+    font-family: 'Poppins', sans-serif;
+    line-height: 1.6;
+    font-weight: 600;
     margin: 0;
 }
 
@@ -264,7 +268,7 @@ main {
     display: flex;
     gap: 2rem;
     max-width: 1200px;
-    margin: 100px auto 0 auto;
+    margin: 120px auto 0 auto;
     padding: 0 20px 40px 20px;
 }
 .dashboard-grid {
