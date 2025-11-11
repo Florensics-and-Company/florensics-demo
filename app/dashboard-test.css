@@ -300,6 +300,10 @@ main {
     font-weight: 600;
     margin-bottom: 0.5rem;
 }
+.dashboard-subvalue {
+    font-size: 0.95rem;
+    margin-top: 0.2rem;
+}
 .dashboard-warning {
     color: var(--accent-color);
     font-size: 0.95rem;
@@ -311,7 +315,6 @@ main {
 .dashboard-map {
     background: var(--light-color);
     border-radius: 16px;
-    box-shadow: 0 2px 8px rgba(44,95,45,0.08);
     padding: 2rem 1.5rem;
     min-width: 350px;
     max-width: 500px;
@@ -367,6 +370,10 @@ body.demo-dark {
     color: var(--muted-2);
 }
 
+.demo-dark .logo {
+    filter: invert(1);
+}
+
 .demo-dark .nav-links a:hover {
     color: #e6e6e6;
 }
@@ -404,7 +411,7 @@ body.demo-dark {
 
 /* Darken map tiles to better match the demo dark theme without relying on a dark tile provider */
 .demo-dark .leaflet-tile {
-    filter: brightness(0.22) contrast(1.05) saturate(0.9);
+    filter: brightness(0.75) contrast(1.05) saturate(0.9);
 }
 .demo-dark .leaflet-control-layers-toggle {
     background: rgba(20,20,20,0.85) !important;
@@ -415,7 +422,7 @@ body.demo-dark {
 
 .demo-dark .leaflet-bar a,
 .demo-dark .leaflet-control-zoom a {
-    background: transparent !important;
+    background: rgba(20,20,20,0.85) !important;
     color: var(--muted) !important;
     width: 34px !important;
     height: 34px !important;
@@ -467,11 +474,6 @@ body.demo-dark {
 
 .demo-dark .leaflet-popup-tip {
     background: rgba(30, 30, 30, 0.95);
-}
-
-/* Darken map tiles to better match the demo dark theme without relying on a dark tile provider */
-.demo-dark .leaflet-tile {
-    filter: brightness(0.22) contrast(1.05) saturate(0.9);
 }
 
 #map {

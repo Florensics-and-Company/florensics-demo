@@ -1,121 +1,215 @@
-// import { HStack } from "@chakra-ui/react";
-import { BellRing, Check } from "lucide-react";
-import * as React from "react";
+import type { LinksFunction, MetaFunction } from "@remix-run/node";
+import { useEffect, useRef, useState } from "react";
 import { ClientOnly } from "remix-utils/client-only";
 
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Switch } from "@/components/ui/switch";
-import { cn } from "@/lib/utils";
-import { json, LoaderFunctionArgs } from "@remix-run/node";
-import MapView from "react-native-maps";
-import { HStack } from "@chakra-ui/react";
+import dashboardTestStyles from "../dashboard-test.css";
+import florensicsLogo from "../images/florensics.png";
 import { MapWindow } from "~/components/MapWindow.client";
-import { useLoaderData } from "@remix-run/react";
-import { useEffect, useState } from "react";
 
-export const loader = async ({ request }: LoaderFunctionArgs) => {
-  return json({ messages: [] });
-};
-
-const default_messages = [
+export const links: LinksFunction = () => [
+  { rel: "stylesheet", href: dashboardTestStyles },
   {
-    title: "Perigo de incêndio.",
-    description: "Detetado sinal alarmante pelo dispositivo 0",
+    rel: "stylesheet",
+    href: "https://unpkg.com/leaflet@1.9.4/dist/leaflet.css",
+  },
+  {
+    rel: "preconnect",
+    href: "https://fonts.googleapis.com",
+  },
+  {
+    rel: "preconnect",
+    href: "https://fonts.gstatic.com",
+    crossOrigin: "anonymous",
+  },
+  {
+    rel: "stylesheet",
+    href: "https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap",
   },
 ];
 
-type CardProps = React.ComponentProps<typeof Card>;
+export const meta: MetaFunction = () => {
+  return [
+    { title: "Demo Dashboard - Florensics" },
+    { charSet: "utf-8" },
+    { name: "viewport", content: "width=device-width,initial-scale=1" },
+  ];
+};
 
-export default function Dashboard({ ...props }: CardProps) {
+// Client-side map component
+function DashboardMap() {
+  const mapRef = useRef<HTMLDivElement>(null);
+  const mapInstanceRef = useRef<any>(null);
+
   useEffect(() => {
-    const interval = setInterval(() => {
+    // Only run on client side
+    if (typeof window === "undefined" || !mapRef.current) return;
+
+    // Dynamically import Leaflet
+    import("leaflet").then((module) => {
+      // Access the default export
+      const L = module.default || module;
+
+      if (mapInstanceRef.current) return; // Map already initialized
+
+      // Initialize map
+      const map = L.map(mapRef.current!).setView([38.7223, -9.1393], 13);
+
+      // Add tile layer
+      L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        attribution:
+          '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+      }).addTo(map);
+
+      // Add marker
+      L.marker([38.7223, -9.1393])
+        .addTo(map)
+        .bindPopup("<strong>Sensor Location</strong><br>Lisbon, Portugal")
+        .openPopup();
+
+      mapInstanceRef.current = map;
+    });
+
+    // Cleanup
+    return () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove();
+        mapInstanceRef.current = null;
+      }
+    };
+  }, []);
+
+  return (
+    <div
+      ref={mapRef}
+      id="map"
+      style={{ height: "350px", borderRadius: "16px" }}
+    />
+  );
+}
+
+export default function DashboardTest() {
+  const [temperature, setTemperature] = useState("--");
+  const [humidity, setHumidity] = useState("--");
+  const [fire, setFire] = useState("--");
+  const [fireAnal, setFireAnal] = useState("--");
+  const [smoke, setSmoke] = useState("--");
+  const [smokeWarning, setSmokeWarning] = useState(false);
+
+  // Apply demo-dark class to html and body elements
+  useEffect(() => {
+    document.documentElement.classList.add("demo-dark");
+    document.body.classList.add("demo-dark");
+
+    return () => {
+      document.documentElement.classList.remove("demo-dark");
+      document.body.classList.remove("demo-dark");
+    };
+  }, []);
+
+  useEffect(() => {
+    // Simulated sensor data update (replace with actual API calls)
+    const updateSensorData = () => {
       fetch("/status").then((res) => {
         if (res.ok) {
           res.json().then((data) => {
-            setStatus(data);
+            setTemperature(data.temp?.toFixed(1) || "--");
+            setHumidity(data.hum?.toFixed(1) || "--");
+            setFire(data.flameBinary ? "Yes" : "No");
+            setFireAnal(data.flame?.toFixed(1) || "--");
+            const smokeLevel = data.gas ? data.gas * 100 : 0;
+            setSmoke(data.gas ? smokeLevel.toFixed(1) : "--");
+            setSmokeWarning(smokeLevel > 75);
             if (data.alert) {
-              setNot(true);
               const audio = new Audio(
                 "https://www.myinstants.com/media/sounds/tethys.mp3",
               );
               audio.play();
-            }else{setNot(false)}
+            }
           });
         }
       });
-    }, 1000);
+    };
+
+    // Initial update
+    updateSensorData();
+
+    // Update every 5 seconds
+    const interval = setInterval(updateSensorData, 1000);
 
     return () => clearInterval(interval);
   }, []);
 
-  const [status, setStatus] = useState(null);
-  const [notifications, setNot] = useState(false);
-
-  const { messages } = useLoaderData<typeof loader>();
   return (
     <div
-      style={{ width: "100%", height: "100%", overflow: "hidden" }}
-      className="flex flex-col md:flex-row"
+      className="demo-dark"
+      style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}
     >
-      <Card
-        style={{ float: "left" }}
-        className={cn("minW-[300px] block")}
-        {...props}
-      >
-        <CardHeader>
-          <CardTitle>Notificações</CardTitle>
-          <CardDescription>
-            {notifications? (
-              default_messages.length == 1 ? (
-                <>{"Tem " + default_messages.length + " notificação."}</>
-              ) : (
-                <>{"Tem " + default_messages.length + " notificações."}</>
-              )
-            ) : (
-              "Sem novas notificações."
-            )}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className={notifications?"grid  bg-slate-100 rounded":"grid " }>
-          <div>
-          {notifications&&default_messages.map((notification, index) => (
-              <div
-                key={index}
-                className=" grid grid-cols-[25px_1fr] items-start last:mb-0 last:pb-0"
-              >
-                <span className="flex h-2 w-2 translate-y-1 rounded-full bg-red-700" />
-                <div className="space-y-1">
-                  <p className="text-sm font-medium leading-none font-bold">
-                    {notification.title}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    {notification.description}
-                  </p>
-                </div>
+      <header>
+        <nav className="demo-nav">
+          <a
+            href="https://florensics.pt"
+            className="logo-container"
+            style={{ textDecoration: "none", color: "inherit" }}
+          >
+            <img src={florensicsLogo} alt="Florensics Logo" className="logo" />
+            <h1>Florensics</h1>
+          </a>
+        </nav>
+      </header>
+      <main style={{ flex: 1 }}>
+        <div className="dashboard-container">
+          <div className="dashboard-grid">
+            <div className="dashboard-box" id="temperature-box">
+              <h2>Temperature</h2>
+              <div className="dashboard-value" id="temperature-value">
+                {temperature} °C
               </div>
-            ))}
+            </div>
+            <div className="dashboard-box" id="humidity-box">
+              <h2>Humidity</h2>
+              <div className="dashboard-value" id="humidity-value">
+                {humidity} %
+              </div>
+            </div>
+            <div
+              className={`dashboard-box ${fire === "Yes" ? "fire-active" : ""}`}
+              id="fire-box"
+            >
+              <h2>Fire</h2>
+              <div className="dashboard-value" id="fire-value">
+                {fire}
+              </div>
+              <div className="dashboard-subvalue" id="smoke-warning">
+                {fireAnal}
+              </div>
+            </div>
+            <div className="dashboard-box" id="smoke-box">
+              <h2>Smoke</h2>
+              <div className="dashboard-value" id="smoke-value">
+                {smoke}
+              </div>
+              {smokeWarning && (
+                <div className="dashboard-warning" id="smoke-warning">
+                  Abnormal level
+                </div>
+              )}
+            </div>
           </div>
-        </CardContent>
-        <CardFooter>
-          <Button className="w-full">
-            {/* <Check className="mr-2 h-4 w-4" /> Mark all as read */}
-          </Button>
-        </CardFooter>
-      </Card>
-
-      <ClientOnly>
-        {() => {
-          return <MapWindow status={status} />;
-        }}
-      </ClientOnly>
+          <div className="dashboard-map">
+            <h2>Location</h2>
+            <ClientOnly>
+              {() => {
+                return <MapWindow status={{ hum: humidity, temp: temperature, flame: fire }} />;
+              }}
+            </ClientOnly>
+          </div>
+        </div>
+      </main>
+      <footer>
+        <div className="container">
+          <p>&copy; 2025 Florensics. All rights reserved.</p>
+        </div>
+      </footer>
     </div>
   );
 }

@@ -1,23 +1,54 @@
 import { json, LoaderFunctionArgs } from "@remix-run/node";
+
 import { prisma } from "~/db.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
-  const url = new URL(request.url);
-  const flame = url.searchParams.get("flame") || undefined;
+  const searchParams = new URL(request.url).searchParams;
+  const flameBinaryString = searchParams.get("flame");
+  const flameAnalogString = searchParams.get("flame_anal");
   const status =
-    url.searchParams.get("status") === null
-      ? flame==="1"
+    searchParams.get("status") === null
+      ? flameBinaryString === "true"
         ? true
         : undefined
-      : url.searchParams.get("status") === "true"
+      : searchParams.get("status") === "true"
         ? true
         : false;
 
-  const temp = url.searchParams.get("temp") || undefined;
-  const hum = url.searchParams.get("hum") || undefined;
+  const tempString = searchParams.get("temp");
+  const humString = searchParams.get("hum");
+  const gasString = searchParams.get("gas");
+
+  // Validate and convert to floats
+  const temp = tempString ? parseFloat(tempString) : undefined;
+  const hum = humString ? parseFloat(humString) : undefined;
+  const gas = gasString ? parseFloat(gasString) : undefined;
+  const flame = flameAnalogString ? parseFloat(flameAnalogString) : undefined;
+
+  // Check if they are valid floats (not NaN)
+  const validTemp = temp !== undefined && !isNaN(temp) ? temp : undefined;
+  const validHum = hum !== undefined && !isNaN(hum) ? hum : undefined;
+  const validGas = gas !== undefined && !isNaN(gas) ? gas : undefined;
+  const validFlame = flame !== undefined && !isNaN(flame) ? flame : undefined;
+
+  // Handle flameBinary
+  const flameBinary = flameBinaryString === "true" ? true : flameBinaryString === "false" ? false : undefined;
+
+  const newData = {
+    alert: status,
+    temp: validTemp,
+    hum: validHum,
+    flameBinary: flameBinary,
+    gas: validGas,
+    flame: validFlame,
+  };
+
   await prisma.sensor.upsert({
-    create: { id: "0", alert: status, temp, hum, flame },
-    update: { alert: status, temp, hum, flame },
+    create: {
+      id: "0",
+      ...newData,
+    },
+    update: { ...newData },
     where: { id: "0" },
   });
 
